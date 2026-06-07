@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Product Management Process Map — SaaS</title>
+<style>
+  :root {
+    --bg-0: #070b16;
+    --bg-1: #0b1124;
+    --panel: rgba(17, 24, 45, 0.82);
+    --panel-solid: #111a30;
+    --stroke: rgba(148, 163, 184, 0.16);
+    --stroke-strong: rgba(148, 163, 184, 0.30);
+    --text: #e8edf7;
+    --text-dim: #93a0bb;
+    --text-faint: #64728f;
+    --c-strategy:   #6366f1;
+    --c-discovery:  #06b6d4;
+    --c-planning:   #10b981;
+    --c-definition: #f59e0b;
+    --c-delivery:   #f97316;
+    --c-launch:     #ec4899;
+    --c-growth:     #8b5cf6;
+    --c-measure:    #3b82f6;
+    --c-governance: #64748b;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,0.75);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 700px at 18% -10%, rgba(99,102,241,0.18), transparent 55%),
+      radial-gradient(1000px 600px at 95% 110%, rgba(59,130,246,0.16), transparent 50%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Top bar ===== */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 22px;
+    background: linear-gradient(180deg, rgba(7,11,22,0.92), rgba(7,11,22,0.0));
+    pointer-events: none;
+  }
+  .brand { pointer-events: auto; }
+  .brand h1 {
+    font-size: 17px; font-weight: 700; letter-spacing: 0.2px; margin: 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brand .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--c-strategy), var(--c-discovery), var(--c-planning), var(--c-definition), var(--c-delivery), var(--c-launch), var(--c-growth), var(--c-measure), var(--c-strategy));
+    box-shadow: 0 0 14px rgba(99,102,241,0.7);
+  }
+  .brand p { margin: 3px 0 0 21px; font-size: 12.5px; color: var(--text-dim); }
+
+  /* ===== Legend ===== */
+  .legend {
+    position: fixed; top: 64px; left: 22px; z-index: 35;
+    background: var(--panel); backdrop-filter: blur(14px);
+    border: 1px solid var(--stroke); border-radius: 14px;
+    padding: 12px; width: 196px; box-shadow: var(--shadow);
+  }
+  .legend h3 { margin: 2px 4px 9px; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); font-weight: 700; }
+  .legend .item {
+    display: flex; align-items: center; gap: 9px; padding: 6px 8px;
+    border-radius: 9px; cursor: pointer; font-size: 12.5px; color: var(--text-dim);
+    transition: background 0.15s, color 0.15s;
+  }
+  .legend .item:hover { background: rgba(148,163,184,0.08); color: var(--text); }
+  .legend .item.active { background: rgba(148,163,184,0.12); color: var(--text); }
+  .legend .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; box-shadow: 0 0 8px currentColor; }
+  .legend .reset { margin-top: 6px; font-size: 11.5px; color: var(--text-faint); text-align: center; cursor: pointer; padding: 5px; border-radius: 8px; }
+  .legend .reset:hover { color: var(--text); background: rgba(148,163,184,0.08); }
+
+  /* ===== Canvas ===== */
+  #stage {
+    position: fixed; inset: 0; overflow: hidden; cursor: grab;
+  }
+  #stage.dragging { cursor: grabbing; }
+  #world {
+    position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    background-image: radial-gradient(rgba(148,163,184,0.10) 1px, transparent 1.4px);
+    background-size: 30px 30px;
+  }
+  #edges { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+
+  /* ===== Lane / phase headers ===== */
+  .lane-label {
+    position: absolute; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-faint); font-weight: 700;
+  }
+  .phase-head {
+    position: absolute; display: flex; flex-direction: column; gap: 2px;
+    padding: 10px 14px; border-radius: 12px; width: 250px;
+    background: var(--panel); border: 1px solid var(--stroke);
+    border-top: 3px solid var(--phc);
+  }
+  .phase-head .idx { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; color: var(--phc); }
+  .phase-head .ttl { font-size: 14.5px; font-weight: 700; }
+  .phase-head .sub { font-size: 11.5px; color: var(--text-dim); }
+
+  /* ===== Nodes ===== */
+  .node {
+    position: absolute; width: 250px; padding: 12px 14px;
+    background: var(--panel); backdrop-filter: blur(8px);
+    border: 1px solid var(--stroke); border-left: 3px solid var(--nc);
+    border-radius: 12px; cursor: pointer;
+    box-shadow: 0 10px 26px -16px rgba(0,0,0,0.8);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s, opacity 0.2s;
+  }
+  .node:hover { transform: translateY(-3px); box-shadow: 0 18px 34px -16px rgba(0,0,0,0.85), 0 0 0 1px var(--nc); }
+  .node.selected { box-shadow: 0 0 0 2px var(--nc), 0 18px 34px -14px rgba(0,0,0,0.9); transform: translateY(-3px); }
+  .node.dimmed { opacity: 0.16; filter: saturate(0.4); }
+  .node .ntitle { font-size: 13.5px; font-weight: 650; line-height: 1.25; }
+  .node .nmeta { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .node .chip {
+    font-size: 10.5px; color: var(--text-dim); background: rgba(148,163,184,0.10);
+    border: 1px solid var(--stroke); border-radius: 999px; padding: 2px 8px;
+  }
+  .node .chip.owner { color: var(--nc); border-color: color-mix(in srgb, var(--nc) 45%, transparent); background: color-mix(in srgb, var(--nc) 12%, transparent); }
+  .node.gov { width: 220px; }
+
+  .edge { fill: none; stroke-width: 2; transition: opacity 0.2s; }
+  .edge.loop { stroke-dasharray: 7 6; }
+  .edge.gov { stroke-dasharray: 2 7; stroke-width: 1.6; }
+  .edge.dimmed { opacity: 0.06; }
+
+  /* ===== Controls ===== */
+  .controls {
+    position: fixed; bottom: 22px; left: 22px; z-index: 35;
+    display: flex; gap: 8px; align-items: center;
+    background: var(--panel); backdrop-filter: blur(14px);
+    border: 1px solid var(--stroke); border-radius: 12px; padding: 7px; box-shadow: var(--shadow);
+  }
+  .controls button {
+    width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--stroke);
+    background: rgba(148,163,184,0.06); color: var(--text); font-size: 16px; cursor: pointer;
+    display: grid; place-items: center; transition: background 0.15s, border-color 0.15s;
+  }
+  .controls button:hover { background: rgba(148,163,184,0.16); border-color: var(--stroke-strong); }
+  .controls .zlabel { font-size: 12px; color: var(--text-dim); min-width: 46px; text-align: center; }
+  .controls .sep { width: 1px; height: 24px; background: var(--stroke); }
+  .controls .fit { width: auto; padding: 0 12px; font-size: 12.5px; font-weight: 600; }
+
+  .hint {
+    position: fixed; bottom: 24px; right: 22px; z-index: 35;
+    font-size: 12px; color: var(--text-faint);
+    background: var(--panel); border: 1px solid var(--stroke); border-radius: 10px;
+    padding: 8px 12px; backdrop-filter: blur(10px);
+  }
+  .hint b { color: var(--text-dim); font-weight: 600; }
+
+  /* ===== Detail panel ===== */
+  .detail {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 380px; z-index: 50;
+    background: var(--panel-solid); border-left: 1px solid var(--stroke-strong);
+    box-shadow: -24px 0 60px -30px rgba(0,0,0,0.9);
+    transform: translateX(100%); transition: transform 0.32s cubic-bezier(.22,.61,.36,1);
+    display: flex; flex-direction: column;
+  }
+  .detail.open { transform: translateX(0); }
+  .detail .dhead { padding: 22px 22px 16px; border-bottom: 1px solid var(--stroke); position: relative; }
+  .detail .dhead::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background: var(--dc); }
+  .detail .phase-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--dc); }
+  .detail h2 { margin: 7px 0 8px; font-size: 20px; line-height: 1.25; }
+  .detail .purpose { font-size: 13.5px; color: var(--text-dim); line-height: 1.5; }
+  .detail .dbody { padding: 18px 22px 30px; overflow-y: auto; }
+  .detail .row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .detail .row .k { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-faint); width: 78px; flex: none; padding-top: 2px; font-weight: 700; }
+  .detail .row .v { font-size: 13px; color: var(--text); }
+  .detail .sect { margin-top: 18px; }
+  .detail .sect h4 { margin: 0 0 9px; font-size: 11px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); font-weight: 700; }
+  .detail ul { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .detail li { font-size: 13px; color: var(--text); line-height: 1.4; padding-left: 18px; position: relative; }
+  .detail li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 6px; height: 6px; border-radius: 2px; background: var(--dc); }
+  .detail .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .detail .tags span { font-size: 11.5px; color: var(--text-dim); background: rgba(148,163,184,0.10); border: 1px solid var(--stroke); border-radius: 7px; padding: 3px 9px; }
+  .detail .close {
+    position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--stroke); background: rgba(148,163,184,0.06); color: var(--text-dim);
+    cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center;
+  }
+  .detail .close:hover { color: var(--text); background: rgba(148,163,184,0.16); }
+  .detail .nav { display: flex; gap: 8px; margin-top: 20px; }
+  .detail .nav button { flex: 1; padding: 9px; border-radius: 9px; border: 1px solid var(--stroke); background: rgba(148,163,184,0.06); color: var(--text-dim); font-size: 12.5px; cursor: pointer; }
+  .detail .nav button:hover { color: var(--text); background: rgba(148,163,184,0.16); }
+
+  @media (max-width: 720px) {
+    .legend { display: none; }
+    .detail { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1><span class="dot"></span> Product Management Process Map</h1>
+    <p>The end-to-end operating lifecycle of product management in a SaaS company</p>
+  </div>
+</div>
+
+<div class="legend" id="legend">
+  <h3>Lifecycle phases</h3>
+  <div id="legend-items"></div>
+  <div class="reset" id="legend-reset">Show all</div>
+</div>
+
+<div id="stage">
+  <div id="world">
+    <svg id="edges">
+      <defs></defs>
+    </svg>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="zoom-out" title="Zoom out">−</button>
+  <span class="zlabel" id="zlabel">100%</span>
+  <button id="zoom-in" title="Zoom in">+</button>
+  <div class="sep"></div>
+  <button class="fit" id="fit" title="Fit to screen">Fit</button>
+</div>
+
+<div class="hint"><b>Drag</b> to pan · <b>Scroll</b> to zoom · <b>Click</b> a node for detail</div>
+
+<aside class="detail" id="detail">
+  <div class="dhead">
+    <button class="close" id="detail-close">×</button>
+    <div class="phase-tag" id="d-phase"></div>
+    <h2 id="d-title"></h2>
+    <div class="purpose" id="d-purpose"></div>
+  </div>
+  <div class="dbody" id="d-body"></div>
+</aside>
+
+<script>
+/* ============================================================
+   DATA MODEL
+   ============================================================ */
+const PHASES = [
+  { id: "strategy",   idx: "01", title: "Strategy & Vision",        sub: "Decide where to play and why",        color: "var(--c-strategy)"   },
+  { id: "discovery",  idx: "02", title: "Discovery & Research",     sub: "Understand customers & problems",     color: "var(--c-discovery)"  },
+  { id: "planning",   idx: "03", title: "Planning & Prioritization",sub: "Choose what to build next",           color: "var(--c-planning)"   },
+  { id: "definition", idx: "04", title: "Definition & Design",      sub: "Shape the solution",                  color: "var(--c-definition)" },
+  { id: "delivery",   idx: "05", title: "Delivery & Development",   sub: "Build it with engineering",           color: "var(--c-delivery)"   },
+  { id: "launch",     idx: "06", title: "Launch & Go-to-Market",    sub: "Ship and bring it to market",         color: "var(--c-launch)"     },
+  { id: "growth",     idx: "07", title: "Growth & Optimization",    sub: "Drive adoption and revenue",          color: "var(--c-growth)"     },
+  { id: "measure",    idx: "08", title: "Measure & Learn",          sub: "Close the loop with evidence",        color: "var(--c-measure)"    },
+];
+
+const COL_X = { strategy:60, discovery:400, planning:740, definition:1080, delivery:1420, launch:1760, growth:2100, measure:2440 };
+const ROW_Y = [250, 400, 550, 700];   // four stacked node rows per column
+const HEAD_Y = 150;
+
+// owner/cadence/purpose/activities/inputs/outputs/tools
+const NODES = [
+  /* ---- 01 Strategy & Vision ---- */
+  { id:"market", phase:"strategy", row:0, title:"Market & Competitive Research",
+    owner:"Product Lead", cadence:"Quarterly",
+    purpose:"Map the market landscape, competitors, and trends to find where the product can win.",
+    activities:["Run TAM/SAM/SOM sizing","Build competitive teardown & positioning matrix","Track category & technology trends","Identify under-served segments"],
+    inputs:["Analyst reports","Win/loss data","Sales & field intel"],
+    outputs:["Market landscape brief","Competitive matrix","Strategic gaps"],
+    tools:["Crayon","G2","Notion","Spreadsheets"] },
+  { id:"vision", phase:"strategy", row:1, title:"Product Vision & Strategy",
+    owner:"CPO / Head of Product", cadence:"Annual · revisited quarterly",
+    purpose:"Define the long-term vision and the strategy that connects customer value to business goals.",
+    activities:["Author product vision & narrative","Define strategic pillars / bets","Align with company strategy","Socialize with leadership & board"],
+    inputs:["Company strategy","Market research","Customer insight"],
+    outputs:["Vision doc","Strategy on a page","North-star definition"],
+    tools:["Productboard","Notion","Slides"] },
+  { id:"okr", phase:"strategy", row:2, title:"Goal & OKR Setting",
+    owner:"Product Lead", cadence:"Quarterly",
+    purpose:"Translate strategy into measurable objectives and key results that focus the team.",
+    activities:["Set product objectives & KRs","Cascade to squads","Define the north-star metric & inputs","Align cross-functional targets"],
+    inputs:["Strategy pillars","Prior-period results","Capacity"],
+    outputs:["OKR set","North-star tree","Success metrics"],
+    tools:["Ally / Viva Goals","Sheets","Jira"] },
+  { id:"pricing", phase:"strategy", row:3, title:"Business Model & Pricing Strategy",
+    owner:"PM + Finance + PMM", cadence:"Annual · ad hoc",
+    purpose:"Decide how the product creates and captures value across packaging and pricing.",
+    activities:["Define packaging & tiers","Run pricing & willingness-to-pay research","Model unit economics","Set monetization guardrails"],
+    inputs:["Cost model","Segment value","Competitor pricing"],
+    outputs:["Pricing model","Packaging tiers","Margin targets"],
+    tools:["Sheets","Paddle/Stripe","Survey tools"] },
+
+  /* ---- 02 Discovery & Research ---- */
+  { id:"interviews", phase:"discovery", row:0, title:"Customer Discovery Interviews",
+    owner:"Product Manager", cadence:"Weekly (continuous)",
+    purpose:"Talk to customers continuously to understand needs, pains, and context first-hand.",
+    activities:["Recruit & schedule interviews","Run problem & solution interviews","Synthesize insights & quotes","Maintain an opportunity backlog"],
+    inputs:["Target segments","Research questions","Customer list"],
+    outputs:["Insight notes","Opportunity backlog","Verbatims"],
+    tools:["Dovetail","Calendly","Zoom","Grain"] },
+  { id:"research", phase:"discovery", row:1, title:"User & Usability Research",
+    owner:"UX Researcher", cadence:"Per initiative",
+    purpose:"Study how users behave and where they struggle through structured research methods.",
+    activities:["Plan studies & recruit","Run usability & concept tests","Survey at scale","Share research readouts"],
+    inputs:["Research goals","Prototypes","Participant pool"],
+    outputs:["Research report","Severity-ranked issues","Personas"],
+    tools:["Maze","UserTesting","Dovetail","Typeform"] },
+  { id:"jtbd", phase:"discovery", row:2, title:"Opportunity & JTBD Analysis",
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Frame validated needs as jobs-to-be-done and size opportunities worth pursuing.",
+    activities:["Map jobs, pains & gains","Build opportunity-solution trees","Score & prioritize opportunities","Define problem statements"],
+    inputs:["Interview insights","Behavioral data","Support themes"],
+    outputs:["Opportunity tree","Problem statements","Prioritized opportunities"],
+    tools:["Miro","Productboard","Notion"] },
+  { id:"dataanalysis", phase:"discovery", row:3, title:"Behavioral Data Analysis",
+    owner:"Product / Data Analyst", cadence:"Continuous",
+    purpose:"Use product and funnel data to validate problems and quantify opportunity.",
+    activities:["Analyze funnels & cohorts","Spot drop-offs & friction","Quantify opportunity size","Pair qual + quant findings"],
+    inputs:["Event data","Funnels","Segment definitions"],
+    outputs:["Data insights","Opportunity sizing","Hypotheses"],
+    tools:["Amplitude","Mixpanel","SQL","Looker"] },
+
+  /* ---- 03 Planning & Prioritization ---- */
+  { id:"roadmap", phase:"planning", row:0, title:"Roadmap Planning",
+    owner:"Product Manager", cadence:"Quarterly · rolling",
+    purpose:"Sequence the most valuable opportunities into a now/next/later outcome roadmap.",
+    activities:["Map opportunities to outcomes","Build now/next/later roadmap","Balance bets vs. KTLO vs. debt","Align stakeholders on sequence"],
+    inputs:["Opportunities","OKRs","Capacity & constraints"],
+    outputs:["Outcome roadmap","Themes","Sequencing rationale"],
+    tools:["Productboard","Aha!","Jira Roadmaps"] },
+  { id:"prioritization", phase:"planning", row:1, title:"Prioritization (RICE / WSJF)",
+    owner:"Product Manager", cadence:"Per cycle",
+    purpose:"Apply a consistent framework to rank initiatives by value vs. effort.",
+    activities:["Score with RICE / WSJF / value-effort","Run trade-off discussions","Document decisions & rationale","Re-rank as evidence changes"],
+    inputs:["Opportunity scores","Effort estimates","Strategic weight"],
+    outputs:["Ranked backlog","Decision log","Trade-off notes"],
+    tools:["Sheets","Productboard","Jira"] },
+  { id:"backlog", phase:"planning", row:2, title:"Backlog Management",
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Keep a healthy, refined backlog that is ready for the team to pull from.",
+    activities:["Refine & groom items","Write & slice epics","Maintain ready definition","Prune stale items"],
+    inputs:["Ranked initiatives","Discovery notes","Tech input"],
+    outputs:["Refined backlog","Ready stories","Epics"],
+    tools:["Jira","Linear","Azure DevOps"] },
+  { id:"capacity", phase:"planning", row:3, title:"Release & Capacity Planning",
+    owner:"PM + Eng Lead", cadence:"Per release / quarter",
+    purpose:"Match planned scope to team capacity and forecast realistic delivery dates.",
+    activities:["Forecast velocity & capacity","Plan release scope & milestones","Identify dependencies & risks","Set release timeline"],
+    inputs:["Backlog","Team capacity","Dependencies"],
+    outputs:["Release plan","Milestones","Risk register"],
+    tools:["Jira","Linear","Sheets"] },
+
+  /* ---- 04 Definition & Design ---- */
+  { id:"prd", phase:"definition", row:0, title:"PRD & Spec Writing",
+    owner:"Product Manager", cadence:"Per initiative",
+    purpose:"Document the problem, goals, scope, and success criteria so the team aligns before building.",
+    activities:["Write problem & goals","Define scope & non-goals","Specify requirements & edge cases","Set success metrics & rollout"],
+    inputs:["Validated opportunity","Constraints","Design direction"],
+    outputs:["PRD / one-pager","Success metrics","Open questions"],
+    tools:["Notion","Confluence","Productboard"] },
+  { id:"stories", phase:"definition", row:1, title:"User Stories & Acceptance Criteria",
+    owner:"Product Manager", cadence:"Per sprint",
+    purpose:"Break the spec into well-formed, testable stories engineers can execute.",
+    activities:["Write user stories","Define acceptance criteria","Slice for incremental delivery","Clarify with the team"],
+    inputs:["PRD","Designs","Tech constraints"],
+    outputs:["Stories","Acceptance criteria","Estimates"],
+    tools:["Jira","Linear","Gherkin"] },
+  { id:"design", phase:"definition", row:2, title:"UX / UI Design Collaboration",
+    owner:"Product Designer", cadence:"Per initiative",
+    purpose:"Co-create flows and interfaces that solve the problem and fit the design system.",
+    activities:["Map user flows","Design wireframes & high-fidelity UI","Apply design system","Review with PM & eng"],
+    inputs:["PRD","Research insights","Design system"],
+    outputs:["Flows","Mockups","Design specs"],
+    tools:["Figma","FigJam","Storybook"] },
+  { id:"prototype", phase:"definition", row:3, title:"Prototyping & Validation",
+    owner:"Designer + PM", cadence:"Per initiative",
+    purpose:"Test the proposed solution with users before committing engineering effort.",
+    activities:["Build interactive prototypes","Run validation tests","Iterate on findings","De-risk key assumptions"],
+    inputs:["Mockups","Hypotheses","Test participants"],
+    outputs:["Validated design","Iteration notes","Go/no-go"],
+    tools:["Figma","Maze","ProtoPie"] },
+
+  /* ---- 05 Delivery & Development ---- */
+  { id:"sprint", phase:"delivery", row:0, title:"Sprint / Iteration Planning",
+    owner:"PM + Eng Lead", cadence:"Per sprint",
+    purpose:"Commit to a realistic set of work for the iteration with a clear goal.",
+    activities:["Set sprint goal","Pull & estimate stories","Confirm capacity & dependencies","Agree on definition of done"],
+    inputs:["Ready backlog","Capacity","Priorities"],
+    outputs:["Sprint backlog","Sprint goal","Commitments"],
+    tools:["Jira","Linear","Planning Poker"] },
+  { id:"ceremonies", phase:"delivery", row:1, title:"Agile Ceremonies",
+    owner:"Scrum Master / EM", cadence:"Daily–biweekly",
+    purpose:"Keep the team aligned and continuously improving through standups, reviews, and retros.",
+    activities:["Facilitate standups","Run sprint reviews / demos","Hold retrospectives","Track & remove blockers"],
+    inputs:["Sprint backlog","Progress","Impediments"],
+    outputs:["Status & burndown","Action items","Improvements"],
+    tools:["Jira","Slack","Confluence"] },
+  { id:"devcollab", phase:"delivery", row:2, title:"Engineering Collaboration",
+    owner:"Product Manager", cadence:"Daily",
+    purpose:"Partner with engineering during build to answer questions and protect scope.",
+    activities:["Clarify requirements live","Make scope trade-offs","Review work in progress","Unblock decisions fast"],
+    inputs:["Stories","Designs","Questions"],
+    outputs:["Decisions","Scope adjustments","Clarifications"],
+    tools:["Slack","Jira","Figma"] },
+  { id:"qa", phase:"delivery", row:3, title:"QA & Acceptance",
+    owner:"QA + Product Manager", cadence:"Per story / release",
+    purpose:"Verify the build meets acceptance criteria and quality bar before release.",
+    activities:["Test against acceptance criteria","Run QA & regression","PM acceptance / sign-off","Triage & resolve defects"],
+    inputs:["Built features","Acceptance criteria","Test cases"],
+    outputs:["Test results","Accepted increment","Bug list"],
+    tools:["TestRail","Cypress","Jira"] },
+
+  /* ---- 06 Launch & GTM ---- */
+  { id:"gtm", phase:"launch", row:0, title:"Go-to-Market Planning",
+    owner:"Product Marketing Manager", cadence:"Per launch",
+    purpose:"Plan positioning, messaging, and the cross-functional launch so the market is ready.",
+    activities:["Define positioning & messaging","Set launch tier & plan","Coordinate marketing/sales/CS","Prepare launch assets"],
+    inputs:["Feature scope","Target segments","Pricing"],
+    outputs:["GTM plan","Messaging","Launch checklist"],
+    tools:["Notion","Asana","Slides"] },
+  { id:"beta", phase:"launch", row:1, title:"Beta & Early Access",
+    owner:"Product Manager", cadence:"Pre-launch",
+    purpose:"Validate readiness with real users via controlled beta before general availability.",
+    activities:["Recruit beta cohort","Run beta & gather feedback","Track quality & adoption","Decide GA readiness"],
+    inputs:["Release candidate","Beta cohort","Success criteria"],
+    outputs:["Beta feedback","Readiness call","Fix list"],
+    tools:["LaunchDarkly","Productboard","Slack"] },
+  { id:"release", phase:"launch", row:2, title:"Release Management & Rollout",
+    owner:"PM + Eng / Release Mgr", cadence:"Per release",
+    purpose:"Ship safely with phased rollout, flags, and a clear rollback path.",
+    activities:["Plan phased / canary rollout","Manage feature flags","Monitor health & errors","Coordinate rollback if needed"],
+    inputs:["Accepted increment","Rollout plan","Monitoring"],
+    outputs:["Live feature","Release notes","Rollout status"],
+    tools:["LaunchDarkly","CI/CD","Datadog"] },
+  { id:"enablement", phase:"launch", row:3, title:"Sales & Support Enablement",
+    owner:"PMM + Product Manager", cadence:"Per launch",
+    purpose:"Equip go-to-market and support teams to sell and service the new capability.",
+    activities:["Train sales & CS","Write docs & help content","Prepare demos & FAQs","Update collateral"],
+    inputs:["Feature scope","Messaging","Use cases"],
+    outputs:["Enablement deck","Help docs","Demo scripts"],
+    tools:["Highspot","Zendesk","Loom"] },
+
+  /* ---- 07 Growth & Optimization ---- */
+  { id:"onboarding", phase:"growth", row:0, title:"Activation & Onboarding",
+    owner:"Growth PM", cadence:"Continuous",
+    purpose:"Get new users to first value fast and improve activation conversion.",
+    activities:["Map activation milestones","Optimize onboarding flow","Reduce time-to-value","Test in-app guidance"],
+    inputs:["Activation funnel","User feedback","Aha-moment data"],
+    outputs:["Activation lift","Onboarding flow","Experiments"],
+    tools:["Appcues","Amplitude","Pendo"] },
+  { id:"experimentation", phase:"growth", row:1, title:"Experimentation & A/B Testing",
+    owner:"Growth PM + Data", cadence:"Continuous",
+    purpose:"Run controlled experiments to learn what moves key metrics.",
+    activities:["Form hypotheses","Design & power experiments","Analyze results & significance","Ship winners, kill losers"],
+    inputs:["Hypotheses","Baseline metrics","Test variants"],
+    outputs:["Experiment results","Learnings","Rollout decisions"],
+    tools:["Optimizely","Statsig","GrowthBook"] },
+  { id:"retention", phase:"growth", row:2, title:"Retention & Churn Analysis",
+    owner:"Product Manager", cadence:"Monthly",
+    purpose:"Understand why users stay or leave and improve retention and expansion.",
+    activities:["Analyze retention cohorts","Diagnose churn drivers","Build re-engagement loops","Track expansion signals"],
+    inputs:["Cohort data","Churn reasons","Usage signals"],
+    outputs:["Retention insights","Churn playbook","Initiatives"],
+    tools:["Amplitude","Gainsight","SQL"] },
+  { id:"monetization", phase:"growth", row:3, title:"Pricing & Packaging Optimization",
+    owner:"PM + Finance + PMM", cadence:"Quarterly",
+    purpose:"Continuously refine packaging, pricing, and upsell paths to grow revenue.",
+    activities:["Analyze plan & upgrade funnels","Test pricing & packaging","Optimize upsell / cross-sell","Reduce billing friction"],
+    inputs:["Revenue data","Plan usage","Willingness-to-pay"],
+    outputs:["Pricing changes","Upsell paths","Revenue lift"],
+    tools:["Stripe","ProfitWell","Sheets"] },
+
+  /* ---- 08 Measure & Learn ---- */
+  { id:"metrics", phase:"measure", row:0, title:"Metrics & KPI Tracking",
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Track north-star and supporting KPIs to know if outcomes are being achieved.",
+    activities:["Maintain KPI dashboards","Monitor north-star & inputs","Flag anomalies & trends","Report against OKRs"],
+    inputs:["Event data","OKRs","Targets"],
+    outputs:["Dashboards","KPI status","Alerts"],
+    tools:["Amplitude","Looker","Datadog"] },
+  { id:"analytics", phase:"measure", row:1, title:"Product Analytics & Insight",
+    owner:"Product / Data Analyst", cadence:"Continuous",
+    purpose:"Go beyond dashboards to explain why metrics move and where to act.",
+    activities:["Deep-dive analyses","Segment & funnel investigation","Surface actionable insights","Validate impact of launches"],
+    inputs:["Raw events","Hypotheses","Segments"],
+    outputs:["Insight reports","Impact analysis","Recommendations"],
+    tools:["SQL","Amplitude","Mixpanel","Looker"] },
+  { id:"feedback", phase:"measure", row:2, title:"Customer Feedback Loops",
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Aggregate qualitative signal from across the company to inform what's next.",
+    activities:["Centralize feedback channels","Tag & theme requests","Run NPS / CSAT","Close the loop with customers"],
+    inputs:["Support tickets","NPS/CSAT","Sales & CS notes"],
+    outputs:["Feedback themes","Sentiment trends","Insight backlog"],
+    tools:["Productboard","Zendesk","Delighted"] },
+  { id:"review", phase:"measure", row:3, title:"Post-Launch Review & Retro",
+    owner:"Product Manager", cadence:"Per initiative",
+    purpose:"Evaluate outcomes against goals and feed learnings back into strategy.",
+    activities:["Compare results vs. success metrics","Document what worked / didn't","Decide iterate / scale / sunset","Share learnings widely"],
+    inputs:["Launch metrics","Feedback","Original goals"],
+    outputs:["Outcome review","Learnings","Next-step decision"],
+    tools:["Notion","Slides","Dashboards"] },
+];
+
+// Cross-cutting governance lane (continuous, spans the lifecycle)
+const GOV = [
+  { id:"stakeholder", title:"Stakeholder Management", x:400,
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Keep leadership, customers, and partners aligned and informed throughout.",
+    activities:["Run stakeholder updates","Manage expectations & trade-offs","Negotiate priorities","Build buy-in"],
+    inputs:["Roadmap","Status","Strategy"], outputs:["Alignment","Decisions","Updates"], tools:["Slack","Notion","Slides"] },
+  { id:"alignment", title:"Cross-Functional Alignment", x:1080,
+    owner:"Product Manager", cadence:"Continuous",
+    purpose:"Coordinate engineering, design, marketing, sales, and CS around shared outcomes.",
+    activities:["Run rituals & syncs","Resolve dependencies","Drive shared OKRs","Keep teams in lockstep"],
+    inputs:["Plans","Dependencies","Goals"], outputs:["Coordination","Unblocked work","Shared context"], tools:["Jira","Slack","Confluence"] },
+  { id:"productops", title:"Product Operations", x:1760,
+    owner:"Product Ops", cadence:"Continuous",
+    purpose:"Provide the tooling, data, and process backbone that lets PMs work consistently at scale.",
+    activities:["Standardize process & templates","Govern the tool stack","Steward data & insights access","Coordinate the PM cadence"],
+    inputs:["Team needs","Tooling","Data"], outputs:["Playbooks","Tooling","Reporting"], tools:["Productboard","Looker","Notion"] },
+  { id:"compliance", title:"Security, Privacy & Compliance", x:2100,
+    owner:"PM + Security/Legal", cadence:"Per release · audits",
+    purpose:"Ensure what ships meets security, privacy, and regulatory obligations.",
+    activities:["Run security & privacy review","Manage data-handling & consent","Track compliance requirements","Support audits"],
+    inputs:["Feature scope","Regulations","Risk assessment"], outputs:["Sign-off","Compliance docs","Risk controls"], tools:["Vanta","Jira","DPIA"] },
+];
+const GOV_Y = 40;
+
+// Edges: meaningful handoffs across the lifecycle
+const EDGES = [
+  // strategy internal + out
+  ["market","vision"],["vision","okr"],["vision","pricing"],
+  ["vision","interviews"],["okr","roadmap"],
+  // discovery
+  ["interviews","jtbd"],["research","jtbd"],["dataanalysis","jtbd"],
+  ["jtbd","roadmap"],["jtbd","prioritization"],
+  // planning
+  ["roadmap","prioritization"],["prioritization","backlog"],["backlog","capacity"],
+  ["roadmap","prd"],["backlog","prd"],
+  // definition
+  ["prd","stories"],["prd","design"],["design","prototype"],["prototype","stories"],
+  // delivery
+  ["stories","sprint"],["design","sprint"],["sprint","ceremonies"],
+  ["ceremonies","devcollab"],["devcollab","qa"],
+  // launch
+  ["qa","release"],["qa","beta"],["beta","release"],["gtm","enablement"],
+  ["gtm","release"],["enablement","release"],
+  // growth
+  ["release","onboarding"],["onboarding","experimentation"],
+  ["experimentation","retention"],["retention","monetization"],
+  // measure
+  ["onboarding","metrics"],["experimentation","metrics"],["metrics","analytics"],
+  ["analytics","feedback"],["feedback","review"],
+  // ===== feedback loops (the build-measure-learn cycle) =====
+  ["review","vision","loop"],["feedback","interviews","loop"],["metrics","okr","loop"],
+  // ===== governance (continuous, dashed faint) =====
+  ["stakeholder","roadmap","gov"],["alignment","sprint","gov"],
+  ["productops","metrics","gov"],["compliance","release","gov"],
+];
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const world = document.getElementById("world");
+const svg = document.getElementById("edges");
+const NODE_BY_ID = {};
+[...NODES, ...GOV].forEach(n => NODE_BY_ID[n.id] = n);
+const PHASE_BY_ID = {}; PHASES.forEach(p => PHASE_BY_ID[p.id] = p);
+
+let WORLD_W = 0, WORLD_H = 0;
+
+function el(tag, cls, parent) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// lane labels
+function laneLabel(text, x, y) {
+  const l = el("div", "lane-label", world);
+  l.textContent = text; l.style.left = x + "px"; l.style.top = y + "px";
+}
+laneLabel("Continuous · cross-cutting", 60, GOV_Y - 22);
+laneLabel("The product lifecycle  ·  flows left → right, then loops back", 60, HEAD_Y - 26);
+
+// phase headers
+PHASES.forEach(p => {
+  const h = el("div", "phase-head", world);
+  h.style.setProperty("--phc", p.color);
+  h.style.left = COL_X[p.id] + "px";
+  h.style.top = HEAD_Y + "px";
+  el("div","idx",h).textContent = "PHASE " + p.idx;
+  el("div","ttl",h).textContent = p.title;
+  el("div","sub",h).textContent = p.sub;
+});
+
+// governance nodes
+GOV.forEach(n => {
+  const node = el("div", "node gov", world);
+  node.dataset.id = n.id;
+  node.style.setProperty("--nc", "var(--c-governance)");
+  node.style.left = n.x + "px";
+  node.style.top = GOV_Y + "px";
+  el("div","ntitle",node).textContent = n.title;
+  const meta = el("div","nmeta",node);
+  const o = el("span","chip owner",meta); o.textContent = n.owner;
+  const c = el("span","chip",meta); c.textContent = n.cadence;
+  node.addEventListener("click", e => { e.stopPropagation(); openDetail(n.id); });
+});
+
+// lifecycle nodes
+NODES.forEach(n => {
+  const p = PHASE_BY_ID[n.phase];
+  const node = el("div", "node", world);
+  node.dataset.id = n.id; node.dataset.phase = n.phase;
+  node.style.setProperty("--nc", p.color);
+  node.style.left = COL_X[n.phase] + "px";
+  node.style.top = ROW_Y[n.row] + "px";
+  el("div","ntitle",node).textContent = n.title;
+  const meta = el("div","nmeta",node);
+  const o = el("span","chip owner",meta); o.textContent = n.owner;
+  const c = el("span","chip",meta); c.textContent = n.cadence;
+  node.addEventListener("click", e => { e.stopPropagation(); openDetail(n.id); });
+});
+
+// measure world bounds from DOM
+function computeBounds() {
+  let maxX = 0, maxY = 0;
+  world.querySelectorAll(".node, .phase-head").forEach(elm => {
+    maxX = Math.max(maxX, elm.offsetLeft + elm.offsetWidth);
+    maxY = Math.max(maxY, elm.offsetTop + elm.offsetHeight);
+  });
+  WORLD_W = maxX + 120;
+  WORLD_H = maxY + 260; // room for loop arcs below
+  world.style.width = WORLD_W + "px";
+  world.style.height = WORLD_H + "px";
+  svg.setAttribute("width", WORLD_W);
+  svg.setAttribute("height", WORLD_H);
+  svg.setAttribute("viewBox", `0 0 ${WORLD_W} ${WORLD_H}`);
+}
+
+// arrowhead markers per color
+function buildMarkers() {
+  const defs = svg.querySelector("defs");
+  const colors = {
+    strategy:"#6366f1", discovery:"#06b6d4", planning:"#10b981", definition:"#f59e0b",
+    delivery:"#f97316", launch:"#ec4899", growth:"#8b5cf6", measure:"#3b82f6",
+    governance:"#64748b", loop:"#a78bfa"
+  };
+  Object.entries(colors).forEach(([k,c]) => {
+    const m = document.createElementNS("http://www.w3.org/2000/svg","marker");
+    m.setAttribute("id","arrow-"+k);
+    m.setAttribute("viewBox","0 0 10 10");
+    m.setAttribute("refX","8"); m.setAttribute("refY","5");
+    m.setAttribute("markerWidth","7"); m.setAttribute("markerHeight","7");
+    m.setAttribute("orient","auto-start-reverse");
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d","M0,0 L10,5 L0,10 z");
+    path.setAttribute("fill", c);
+    m.appendChild(path); defs.appendChild(m);
+  });
+  return colors;
+}
+
+function geom(id) {
+  const elm = world.querySelector(`.node[data-id="${id}"]`);
+  return { x: elm.offsetLeft, y: elm.offsetTop, w: elm.offsetWidth, h: elm.offsetHeight };
+}
+
+function drawEdges(colors) {
+  EDGES.forEach(([from, to, type]) => {
+    const a = geom(from), b = geom(to);
+    const fromNode = NODE_BY_ID[from], toNode = NODE_BY_ID[to];
+    const colorKey = type === "loop" ? "loop"
+      : type === "gov" ? "governance"
+      : (fromNode.phase || "governance");
+    let d;
+
+    if (type === "loop") {
+      // long arc below everything, returning right -> left
+      const x1 = a.x + a.w/2, y1 = a.y + a.h;
+      const x2 = b.x + b.w/2, y2 = b.y + b.h;
+      const dip = WORLD_H - 150;
+      d = `M ${x1} ${y1} C ${x1} ${dip}, ${x2} ${dip}, ${x2} ${y2}`;
+    } else if (type === "gov") {
+      // governance node (top) down to a target node top
+      const x1 = a.x + a.w/2, y1 = a.y + a.h;
+      const x2 = b.x + b.w/2, y2 = b.y;
+      const my = (y1 + y2) / 2;
+      d = `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+    } else if (b.x > a.x + 10) {
+      // horizontal flow: right of A -> left of B
+      const x1 = a.x + a.w, y1 = a.y + a.h/2;
+      const x2 = b.x, y2 = b.y + b.h/2;
+      const dx = Math.max(50, (x2 - x1) * 0.5);
+      d = `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`;
+    } else if (Math.abs(b.x - a.x) <= 10) {
+      // same column: bottom of A -> top of B (or reverse)
+      const down = b.y > a.y;
+      const x1 = a.x + a.w/2, y1 = down ? a.y + a.h : a.y;
+      const x2 = b.x + b.w/2, y2 = down ? b.y : b.y + b.h;
+      const dy = (y2 - y1) * 0.5;
+      d = `M ${x1} ${y1} C ${x1} ${y1+dy}, ${x2} ${y2-dy}, ${x2} ${y2}`;
+    } else {
+      // B left of A
+      const x1 = a.x, y1 = a.y + a.h/2;
+      const x2 = b.x + b.w, y2 = b.y + b.h/2;
+      const dx = Math.max(50, (x1 - x2) * 0.5);
+      d = `M ${x1} ${y1} C ${x1-dx} ${y1}, ${x2+dx} ${y2}, ${x2} ${y2}`;
+    }
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "edge" + (type ? " " + type : ""));
+    path.setAttribute("stroke", colors[colorKey]);
+    path.setAttribute("stroke-opacity", type === "gov" ? "0.5" : "0.62");
+    path.setAttribute("marker-end", `url(#arrow-${colorKey})`);
+    path.dataset.from = from; path.dataset.to = to;
+    path.dataset.fromPhase = fromNode.phase || "governance";
+    path.dataset.toPhase = toNode.phase || "governance";
+    svg.appendChild(path);
+  });
+}
+
+computeBounds();
+const COLORS = buildMarkers();
+drawEdges(COLORS);
+
+/* ============================================================
+   PAN / ZOOM
+   ============================================================ */
+const stage = document.getElementById("stage");
+const zlabel = document.getElementById("zlabel");
+let view = { x: 0, y: 0, k: 1 };
+const MIN_K = 0.18, MAX_K = 2.2;
+
+function applyView() {
+  world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k})`;
+  zlabel.textContent = Math.round(view.k * 100) + "%";
+}
+
+function fit() {
+  const vw = stage.clientWidth, vh = stage.clientHeight;
+  const pad = 70;
+  const k = Math.min((vw - pad*2) / WORLD_W, (vh - pad*2) / WORLD_H, MAX_K);
+  view.k = Math.max(MIN_K, k);
+  view.x = (vw - WORLD_W * view.k) / 2;
+  view.y = (vh - WORLD_H * view.k) / 2 + 10;
+  applyView();
+}
+
+function zoomAt(cx, cy, factor) {
+  const newK = Math.min(MAX_K, Math.max(MIN_K, view.k * factor));
+  const wx = (cx - view.x) / view.k;
+  const wy = (cy - view.y) / view.k;
+  view.k = newK;
+  view.x = cx - wx * newK;
+  view.y = cy - wy * newK;
+  applyView();
+}
+
+stage.addEventListener("wheel", e => {
+  e.preventDefault();
+  const rect = stage.getBoundingClientRect();
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  zoomAt(e.clientX - rect.left, e.clientY - rect.top, factor);
+}, { passive: false });
+
+let dragging = false, last = null;
+stage.addEventListener("pointerdown", e => {
+  dragging = true; last = { x: e.clientX, y: e.clientY };
+  stage.classList.add("dragging"); stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  view.x += e.clientX - last.x;
+  view.y += e.clientY - last.y;
+  last = { x: e.clientX, y: e.clientY };
+  applyView();
+});
+function endDrag(){ dragging = false; stage.classList.remove("dragging"); }
+stage.addEventListener("pointerup", endDrag);
+stage.addEventListener("pointercancel", endDrag);
+stage.addEventListener("click", e => { if (e.target === stage || e.target === world) closeDetail(); });
+
+document.getElementById("zoom-in").onclick = () => zoomAt(stage.clientWidth/2, stage.clientHeight/2, 1.2);
+document.getElementById("zoom-out").onclick = () => zoomAt(stage.clientWidth/2, stage.clientHeight/2, 1/1.2);
+document.getElementById("fit").onclick = fit;
+
+/* ============================================================
+   LEGEND / FILTER
+   ============================================================ */
+const legendItems = document.getElementById("legend-items");
+let activePhase = null;
+PHASES.forEach(p => {
+  const item = el("div","item",legendItems);
+  item.dataset.phase = p.id;
+  const sw = el("span","swatch",item); sw.style.background = p.color; sw.style.color = p.color;
+  const t = document.createElement("span"); t.textContent = p.title; item.appendChild(t);
+  item.onclick = () => setPhaseFilter(activePhase === p.id ? null : p.id);
+});
+document.getElementById("legend-reset").onclick = () => setPhaseFilter(null);
+
+function setPhaseFilter(phase) {
+  activePhase = phase;
+  legendItems.querySelectorAll(".item").forEach(it =>
+    it.classList.toggle("active", it.dataset.phase === phase));
+  world.querySelectorAll(".node").forEach(n => {
+    const np = n.dataset.phase; // governance nodes have none
+    const show = !phase || np === phase;
+    n.classList.toggle("dimmed", !show);
+  });
+  svg.querySelectorAll(".edge").forEach(ed => {
+    const show = !phase || ed.dataset.fromPhase === phase || ed.dataset.toPhase === phase;
+    ed.classList.toggle("dimmed", !show);
+  });
+}
+
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
+const detail = document.getElementById("detail");
+const ORDER = [...NODES.map(n=>n.id), ...GOV.map(n=>n.id)];
+let currentId = null;
+
+function openDetail(id) {
+  const n = NODE_BY_ID[id];
+  currentId = id;
+  const phase = PHASE_BY_ID[n.phase];
+  const color = phase ? phase.color : "var(--c-governance)";
+  const phaseName = phase ? `Phase ${phase.idx} · ${phase.title}` : "Continuous · Cross-cutting";
+
+  detail.style.setProperty("--dc", color);
+  document.getElementById("d-phase").textContent = phaseName;
+  document.getElementById("d-title").textContent = n.title;
+  document.getElementById("d-purpose").textContent = n.purpose;
+
+  const body = document.getElementById("d-body");
+  body.innerHTML = "";
+  const meta = `
+    <div class="row"><div class="k">Owner</div><div class="v">${n.owner}</div></div>
+    <div class="row"><div class="k">Cadence</div><div class="v">${n.cadence}</div></div>`;
+  const list = (title, arr) => `
+    <div class="sect"><h4>${title}</h4><ul>${arr.map(i=>`<li>${i}</li>`).join("")}</ul></div>`;
+  const tags = (title, arr) => `
+    <div class="sect"><h4>${title}</h4><div class="tags">${arr.map(i=>`<span>${i}</span>`).join("")}</div></div>`;
+
+  body.innerHTML = meta
+    + list("Key activities", n.activities)
+    + list("Inputs", n.inputs)
+    + list("Outputs", n.outputs)
+    + tags("Tools", n.tools)
+    + `<div class="nav">
+         <button id="d-prev">← Previous</button>
+         <button id="d-next">Next →</button>
+       </div>`;
+
+  document.getElementById("d-prev").onclick = () => step(-1);
+  document.getElementById("d-next").onclick = () => step(1);
+
+  detail.classList.add("open");
+  world.querySelectorAll(".node").forEach(el =>
+    el.classList.toggle("selected", el.dataset.id === id));
+}
+
+function step(dir) {
+  const i = ORDER.indexOf(currentId);
+  const next = (i + dir + ORDER.length) % ORDER.length;
+  openDetail(ORDER[next]);
+}
+
+function closeDetail() {
+  detail.classList.remove("open");
+  currentId = null;
+  world.querySelectorAll(".node.selected").forEach(el => el.classList.remove("selected"));
+}
+document.getElementById("detail-close").onclick = closeDetail;
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeDetail();
+  else if (currentId && e.key === "ArrowRight") step(1);
+  else if (currentId && e.key === "ArrowLeft") step(-1);
+});
+
+/* init */
+fit();
+window.addEventListener("resize", () => { if (!currentId) fit(); });
+</script>
+</body>
+</html>
