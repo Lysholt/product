@@ -141,13 +141,7 @@
     border-radius: 14px 14px 0 0; background: var(--phc);
     box-shadow: 0 0 7px color-mix(in srgb, var(--phc) 45%, transparent);
   }
-  .phase-head .idx {
-    display: inline-flex; align-items: center; align-self: flex-start; gap: 6px;
-    font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-    color: #fff; padding: 2px 9px; border-radius: 999px;
-    background: color-mix(in srgb, var(--phc) 85%, transparent);
-  }
-  .phase-head .ttl { font-size: 16px; font-weight: 800; letter-spacing: 0.2px; color: #fff; margin-top: 2px; }
+  .phase-head .ttl { font-size: 16px; font-weight: 800; letter-spacing: 0.2px; color: #fff; }
   .phase-head .sub { font-size: 11.5px; color: color-mix(in srgb, var(--text) 80%, var(--phc)); }
 
   /* ===== Nodes ===== */
@@ -862,7 +856,6 @@ function render() {
     const first = COL_X[b.phases[0]], last = COL_X[b.phases[b.phases.length - 1]];
     h.style.left = first + "px"; h.style.top = HEAD_Y + "px";
     h.style.width = (last - first + NODE_W) + "px";
-    el("div","idx",h).textContent = "PHASE " + b.idx;
     el("div","ttl",h).textContent = b.title;
     el("div","sub",h).textContent = b.sub;
   });
