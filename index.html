@@ -445,8 +445,8 @@
 const PHASES = [
   { id: "strategy",   idx: "01", title: "Strategy & Vision",        sub: "Decide where to play and why",        color: "var(--c-strategy)"   },
   { id: "discovery",  idx: "02", title: "Discovery & Research",     sub: "Understand customers & problems",     color: "var(--c-discovery)"  },
-  { id: "planning",   idx: "03", title: "Planning & Prioritization",sub: "Choose what to build next",           color: "var(--c-planning)"   },
-  { id: "definition", idx: "04", title: "Definition & Design",      sub: "Shape the solution",                  color: "var(--c-definition)" },
+  { id: "definition", idx: "03", title: "Definition & Design",      sub: "Shape the solution",                  color: "var(--c-definition)" },
+  { id: "planning",   idx: "04", title: "Planning & Prioritization",sub: "Choose what to build next",           color: "var(--c-planning)"   },
   { id: "delivery",   idx: "05", title: "Delivery & Development",   sub: "Build it with engineering",           color: "var(--c-delivery)"   },
   { id: "launch",     idx: "06", title: "Launch & Go-to-Market",    sub: "Ship and bring it to market",         color: "var(--c-launch)"     },
   { id: "growth",     idx: "07", title: "Growth & Optimization",    sub: "Drive adoption and revenue",          color: "var(--c-growth)"     },
@@ -455,7 +455,7 @@ const PHASES = [
 const PHASE_BY_ID = {}; PHASES.forEach(p => PHASE_BY_ID[p.id] = p);
 const PHASE_ORDER = PHASES.map(p => p.id);
 
-const COL_X = { strategy:60, discovery:400, planning:740, definition:1080, delivery:1420, launch:1760, growth:2100, measure:2440 };
+const COL_X = { strategy:60, discovery:400, definition:740, planning:1080, delivery:1420, launch:1760, growth:2100, measure:2440 };
 const HEAD_Y = 270, NODE_START_Y = 370, ROW_GAP = 150, GOV_Y = 40, GOV_GAP = 100;
 
 const AI_LEVELS = {
