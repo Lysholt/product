@@ -523,7 +523,7 @@ const DEFAULT_DATA = {
       ai:{level:"augmented", how:"Natural-language querying of product data; AI flags anomalies and auto-explains funnel drop-offs."} },
 
     /* 03 Planning */
-    { id:"roadmap", lane:"flow", phase:"planning", order:0, title:"Roadmap Planning", owner:"Product Manager", cadence:"Quarterly · rolling",
+    { id:"roadmap", lane:"gov", phase:"planning", order:0, title:"Roadmap Planning", owner:"Product Manager", cadence:"Quarterly · rolling",
       purpose:"Sequence the most valuable opportunities into a now/next/later outcome roadmap.",
       activities:["Map opportunities to outcomes","Build now/next/later roadmap","Balance bets vs. KTLO vs. debt","Align stakeholders on sequence"],
       inputs:["Opportunities","OKRs","Capacity & constraints"], outputs:["Outcome roadmap","Themes","Sequencing rationale"], tools:["Productboard","Aha!","Jira"],
@@ -533,7 +533,7 @@ const DEFAULT_DATA = {
       activities:["Score with RICE / WSJF / value-effort","Run trade-off discussions","Document decisions & rationale","Re-rank as evidence changes"],
       inputs:["Opportunity scores","Effort estimates","Strategic weight"], outputs:["Ranked backlog","Decision log","Trade-off notes"], tools:["Sheets","Productboard","Jira"],
       ai:{level:"augmented", how:"AI estimates RICE inputs (reach, impact, effort) from historical delivery and usage data to de-bias scoring."} },
-    { id:"backlog", lane:"flow", phase:"planning", order:2, title:"Backlog Management", owner:"Product Manager", cadence:"Continuous",
+    { id:"backlog", lane:"gov", phase:"planning", order:2, title:"Backlog Management", owner:"Product Manager", cadence:"Continuous",
       purpose:"Keep a healthy, refined backlog that is ready for the team to pull from.",
       activities:["Refine & groom items","Write & slice epics","Maintain ready definition","Prune stale items"],
       inputs:["Ranked initiatives","Discovery notes","Tech input"], outputs:["Refined backlog","Ready stories","Epics"], tools:["Jira","Linear","Azure DevOps"],
