@@ -124,14 +124,32 @@
     color: var(--text-faint); font-weight: 700;
   }
   .phase-head {
-    position: absolute; display: flex; flex-direction: column; gap: 2px;
-    padding: 10px 14px; border-radius: 12px; width: 250px;
-    background: var(--panel); border: 1px solid var(--stroke);
-    border-top: 3px solid var(--phc);
+    position: absolute; display: flex; flex-direction: column; gap: 3px;
+    padding: 13px 16px 14px; border-radius: 14px; width: 250px;
+    background:
+      linear-gradient(150deg,
+        color-mix(in srgb, var(--phc) 38%, var(--panel-solid)),
+        color-mix(in srgb, var(--phc) 16%, var(--panel-solid)));
+    border: 1px solid color-mix(in srgb, var(--phc) 60%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--phc) 30%, transparent),
+      0 14px 34px -14px color-mix(in srgb, var(--phc) 70%, transparent),
+      0 18px 40px -22px rgba(0,0,0,0.85);
   }
-  .phase-head .idx { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; color: var(--phc); }
-  .phase-head .ttl { font-size: 14.5px; font-weight: 700; }
-  .phase-head .sub { font-size: 11.5px; color: var(--text-dim); }
+  .phase-head::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px;
+    border-radius: 14px 14px 0 0; background: var(--phc);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--phc) 80%, transparent);
+  }
+  .phase-head .idx {
+    display: inline-flex; align-items: center; align-self: flex-start; gap: 6px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #fff; padding: 2px 9px; border-radius: 999px;
+    background: color-mix(in srgb, var(--phc) 85%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--phc) 60%, transparent);
+  }
+  .phase-head .ttl { font-size: 16px; font-weight: 800; letter-spacing: 0.2px; color: #fff; margin-top: 2px; }
+  .phase-head .sub { font-size: 11.5px; color: color-mix(in srgb, var(--text) 80%, var(--phc)); }
 
   /* ===== Nodes ===== */
   .node {
@@ -439,7 +457,7 @@ const PHASE_BY_ID = {}; PHASES.forEach(p => PHASE_BY_ID[p.id] = p);
 const PHASE_ORDER = PHASES.map(p => p.id);
 
 const COL_X = { strategy:60, discovery:400, planning:740, definition:1080, delivery:1420, launch:1760, growth:2100, measure:2440 };
-const HEAD_Y = 150, NODE_START_Y = 250, ROW_GAP = 150, GOV_Y = 40, GOV_GAP = 100;
+const HEAD_Y = 270, NODE_START_Y = 370, ROW_GAP = 150, GOV_Y = 40, GOV_GAP = 100;
 
 const AI_LEVELS = {
   assistive:  { label: "Assistive",  color: "var(--ai-assistive)"  },
