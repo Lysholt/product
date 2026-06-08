@@ -457,6 +457,20 @@ const PHASE_ORDER = PHASES.map(p => p.id);
 
 const COL_X = { strategy:60, discovery:400, definition:740, planning:1080, delivery:1420, launch:1760, growth:2100, measure:2440 };
 const HEAD_Y = 270, NODE_START_Y = 370, ROW_GAP = 150, GOV_Y = 40, GOV_GAP = 100;
+const NODE_W = 250;
+
+// Top "bands" group the phase columns into named lifecycle stages.
+// A band may span several columns (e.g. Delivery covers planning+delivery+launch).
+const BANDS = [
+  { idx:"01", title:"Product strategy", sub:"Decide where to play and why",     color:"var(--c-strategy)",   phases:["strategy"] },
+  { idx:"02", title:"Sense",            sub:"Understand customers & problems",  color:"var(--c-discovery)",  phases:["discovery"] },
+  { idx:"03", title:"Shape",            sub:"Define & design the solution",     color:"var(--c-definition)", phases:["definition"] },
+  { idx:"04", title:"Delivery",         sub:"Plan, build, and ship to market",  color:"var(--c-delivery)",   phases:["planning","delivery","launch"] },
+  { idx:"05", title:"Optimize",         sub:"Drive adoption and revenue",       color:"var(--c-growth)",     phases:["growth"] },
+  { idx:"06", title:"Feedback & Data",  sub:"Close the loop with evidence",     color:"var(--c-measure)",    phases:["measure"] },
+];
+const BAND_BY_PHASE = {};
+BANDS.forEach(b => b.phases.forEach(ph => BAND_BY_PHASE[ph] = b));
 
 const AI_LEVELS = {
   assistive:  { label: "Assistive",  color: "var(--ai-assistive)"  },
@@ -842,13 +856,15 @@ function render() {
 
   laneLabel("Continuous · cross-cutting", 60, GOV_Y - 22);
   laneLabel("The product lifecycle  ·  flows left → right, then loops back", 60, HEAD_Y - 26);
-  PHASES.forEach(p => {
+  BANDS.forEach(b => {
     const h = el("div", "phase-head", world);
-    h.style.setProperty("--phc", p.color);
-    h.style.left = COL_X[p.id] + "px"; h.style.top = HEAD_Y + "px";
-    el("div","idx",h).textContent = "PHASE " + p.idx;
-    el("div","ttl",h).textContent = p.title;
-    el("div","sub",h).textContent = p.sub;
+    h.style.setProperty("--phc", b.color);
+    const first = COL_X[b.phases[0]], last = COL_X[b.phases[b.phases.length - 1]];
+    h.style.left = first + "px"; h.style.top = HEAD_Y + "px";
+    h.style.width = (last - first + NODE_W) + "px";
+    el("div","idx",h).textContent = "PHASE " + b.idx;
+    el("div","ttl",h).textContent = b.title;
+    el("div","sub",h).textContent = b.sub;
   });
 
   layout();
@@ -915,13 +931,13 @@ document.getElementById("fit").onclick = fit;
 /* ============================================================
    LEGEND / FILTER / AI LENS
    ============================================================ */
-let activePhase = null, activeAi = null, lensOn = false;
+let activeBand = null, activeAi = null, lensOn = false;
 const legendItems = document.getElementById("legend-items");
-PHASES.forEach(p => {
-  const item = el("div","item",legendItems); item.dataset.phase = p.id;
-  const sw = el("span","swatch",item); sw.style.background = p.color; sw.style.color = p.color;
-  const t = document.createElement("span"); t.textContent = p.title; item.appendChild(t);
-  item.onclick = () => { activePhase = activePhase===p.id ? null : p.id; syncLegend(); applyDisplay(); };
+BANDS.forEach(b => {
+  const item = el("div","item",legendItems); item.dataset.band = b.idx;
+  const sw = el("span","swatch",item); sw.style.background = b.color; sw.style.color = b.color;
+  const t = document.createElement("span"); t.textContent = b.title; item.appendChild(t);
+  item.onclick = () => { activeBand = activeBand===b.idx ? null : b.idx; syncLegend(); applyDisplay(); };
 });
 const aiItems = document.getElementById("ai-items");
 Object.entries(AI_LEVELS).forEach(([key,info]) => {
@@ -930,20 +946,21 @@ Object.entries(AI_LEVELS).forEach(([key,info]) => {
   const t = document.createElement("span"); t.textContent = info.label; item.appendChild(t);
   item.onclick = () => { activeAi = activeAi===key ? null : key; syncLegend(); applyDisplay(); };
 });
-document.getElementById("legend-reset").onclick = () => { activePhase=null; activeAi=null; syncLegend(); applyDisplay(); };
+document.getElementById("legend-reset").onclick = () => { activeBand=null; activeAi=null; syncLegend(); applyDisplay(); };
 document.getElementById("lens-toggle").onclick = () => { lensOn = !lensOn; syncLegend(); applyDisplay(); };
 
 function syncLegend() {
-  legendItems.querySelectorAll(".item").forEach(it => it.classList.toggle("active", it.dataset.phase===activePhase));
+  legendItems.querySelectorAll(".item").forEach(it => it.classList.toggle("active", it.dataset.band===activeBand));
   aiItems.querySelectorAll(".item").forEach(it => it.classList.toggle("active", it.dataset.ai===activeAi));
   document.getElementById("lens-toggle").classList.toggle("on", lensOn);
 }
 function applyDisplay() {
   world.classList.toggle("lens", lensOn);
+  const bandPhases = activeBand ? BANDS.find(b => b.idx===activeBand).phases : null;
   world.querySelectorAll(".node").forEach(n => {
     const ph = n.dataset.phase, ai = n.dataset.ai;
     let show = true;
-    if (activePhase) show = show && (ph === activePhase);
+    if (bandPhases) show = show && bandPhases.includes(ph);
     if (activeAi) show = show && (ai === activeAi);
     n.classList.toggle("dimmed", !show);
   });
@@ -968,8 +985,9 @@ function openDetail(id) {
   currentId = id;
   const isGov = n.lane === "gov";
   const phase = PHASE_BY_ID[n.phase];
+  const band = BAND_BY_PHASE[n.phase];
   const color = isGov ? "var(--c-governance)" : phase.color;
-  const phaseName = isGov ? "Continuous · Cross-cutting" : `Phase ${phase.idx} · ${phase.title}`;
+  const phaseName = isGov ? "Continuous · Cross-cutting" : `Phase ${band.idx} · ${band.title}`;
   detail.style.setProperty("--dc", color);
   document.getElementById("d-phase").textContent = phaseName;
   document.getElementById("d-title").textContent = n.title;
